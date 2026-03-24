@@ -11,6 +11,7 @@ import logging
 from adata.__version__ import __version__
 from adata.bond import bond
 from adata.common.utils.sunrequests import SunProxy
+from adata.common.utils.rate_limiter import rate_limiter
 from adata.fund import fund
 from adata.sentiment import sentiment
 from adata.stock import stock
@@ -30,6 +31,18 @@ def proxy(is_proxy=False, ip: str = None, proxy_url: str = None):
     SunProxy.set('is_proxy', is_proxy)
     SunProxy.set('ip', ip)
     SunProxy.set('proxy_url', proxy_url)
+    return
+
+
+def reset_rate_limit(url: str = None):
+    """
+    重置请求频率限制记录
+    :param url: 可选，指定URL来重置特定域名的记录，不传则重置所有域名
+    """
+    if url:
+        rate_limiter.reset_domain(url)
+    else:
+        rate_limiter.reset_all()
     return
 
 

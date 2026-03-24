@@ -7,5 +7,6 @@
 """
 from .snowflake import worker
 from .sunrequests import sun_requests as requests
+from .rate_limiter import rate_limiter
 
 

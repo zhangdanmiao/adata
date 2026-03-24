@@ -13,6 +13,9 @@ import time
 
 import requests
 
+from adata.common.exception.exception_msg import RATE_LIMIT_MSG
+from adata.common.utils.rate_limiter import rate_limiter
+
 
 class SunProxy(object):
     _data = {}
@@ -46,7 +49,8 @@ class SunRequests(object):
         super().__init__()
         self.sun_proxy = sun_proxy
 
-    def request(self, method='get', url=None, times=3, retry_wait_time=1588, proxies=None, wait_time=None, **kwargs):
+    def request(self, method='get', url=None, times=3, retry_wait_time=1588, proxies=None, wait_time=None, 
+                rate_limit_enabled=True, rate_limit_count=30, rate_limit_window=60, **kwargs):
         """
         简单封装的请求，参考requests，增加循环次数和次数之间的等待时间
         :param proxies: 代理配置
@@ -55,9 +59,24 @@ class SunRequests(object):
         :param times: 次数，int
         :param retry_wait_time: 重试等待时间，毫秒
         :param wait_time: 等待时间：毫秒；表示每个请求的间隔时间，在请求之前等待sleep，主要用于防止请求太频繁的限制。
+        :param rate_limit_enabled: 是否启用频率限制，默认：True
+        :param rate_limit_count: 时间窗口内最大请求次数，默认：30
+        :param rate_limit_window: 时间窗口大小，单位秒，默认：60
         :param kwargs: 其它 requests 参数，用法相同
         :return: res
         """
+        # 0. 频率限制检查
+        if rate_limit_enabled and url:
+            allowed, remaining, reset_time = rate_limiter.check_and_record(
+                url, max_count=rate_limit_count, window_seconds=rate_limit_window
+            )
+            if not allowed:
+                from urllib.parse import urlparse
+                domain = urlparse(url).netloc
+                raise Exception(RATE_LIMIT_MSG.format(
+                    domain=domain, max_count=rate_limit_count, window_seconds=rate_limit_window
+                ))
+        
         # 1. 获取设置代理
         proxies = self.__get_proxies(proxies)
         # 2. 请求数据结果
