@@ -5,6 +5,12 @@
 @time:2023/4/5
 @log: 
 """
+import sys
+import os
+# 确保使用开发目录的 adata，而不是 site-packages 中的
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 from adata.fund.market.etf_market_ths import ETFMarketThs
 
 
@@ -54,6 +60,12 @@ class ETFMarket(object):
 
 
 if __name__ == '__main__':
-    print(ETFMarket().get_market_etf(fund_code='159529', start_date='2024-01-01'))
-    print(ETFMarket().get_market_etf_min(fund_code='159529'))
-    print(ETFMarket().get_market_etf_current(fund_code='512880'))
+    from adata.fund.market.etf_market import ETFMarket;
+    etf = ETFMarket();
+    # 测试获取31次数据，是否会触发流限制
+    for i in range(31):
+        print(f'第{i+1}次:', len(etf.get_market_etf('159529', start_date='2024-01-01')))
+        
+    # print(ETFMarket().get_market_etf(fund_code='159529', start_date='2024-01-01'))
+    # print(ETFMarket().get_market_etf_min(fund_code='159529'))
+    # print(ETFMarket().get_market_etf_current(fund_code='512880'))
